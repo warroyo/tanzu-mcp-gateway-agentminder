@@ -16,10 +16,11 @@
 # curl, because it needs the HTTP status.
 . "$(dirname "$0")/lib.sh"
 . "$(dirname "$0")/mcp.sh"
+require_setup gateway
 
 HERE=$(dirname "$0")
 AM_GATEWAY_URL=$(jq -r .gateway_url "$STATE/agentminder.json")
-ROUTE=$(cat "$STATE/gateway-route" 2>/dev/null || { cf target -o "$CF_ORG" -s "$CF_SPACE" >/dev/null; gateway_route; })
+ROUTE=$(cat "$STATE/gateway-route")
 TANZU_URL=$ROUTE/$GATEWAY_SERVER_NAME/mcp
 FAIL=0
 check() { if [ "$1" = ok ]; then echo "PASS  $2"; else echo "FAIL  $2"; FAIL=1; fi; }

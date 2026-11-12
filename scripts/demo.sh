@@ -9,6 +9,7 @@
 # grant only reaches tokens minted after it. The same change can be made in
 # the AgentMinder admin console, on the policy's grant rule.
 . "$(dirname "$0")/lib.sh"
+require_setup
 
 ACTION=${1:-show}
 INTENT=urn:iam:agent:intent:echo.${2:-write}

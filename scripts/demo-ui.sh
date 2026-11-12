@@ -20,12 +20,13 @@
 . "$(dirname "$0")/lib.sh"
 . "$(dirname "$0")/mcp.sh"
 need npx
+require_setup gateway
 
 BIND=${DEMO_UI_HOST:-0.0.0.0}
 PORT=${CLIENT_PORT:-6274}
 
 TOKEN=$("$(dirname "$0")/agent-token.sh")
-ROUTE=$(cat "$STATE/gateway-route" 2>/dev/null || { cf target -o "$CF_ORG" -s "$CF_SPACE" >/dev/null; gateway_route; })
+ROUTE=$(cat "$STATE/gateway-route")
 echo "token intents: $(jwt_claims "$TOKEN" | jq -r .scope | grep -o 'intent:[a-z.]*' | tr '\n' ' ')"
 
 export HOST=$BIND CLIENT_PORT=$PORT

@@ -38,3 +38,13 @@ jwt_claims() {
 }
 
 sha12() { printf %s "$1" | sha256sum | cut -c1-12; }
+
+# Stops with the step to run when the setup hasn't been done yet.
+require_setup() {
+  [ -s "$STATE/agentminder.json" ] && [ -s "$STATE/agent-client.json" ] \
+    || { echo "AgentMinder isn't set up yet: run scripts/01-deploy-echo-mcp.sh and scripts/02-agentminder-setup.py first" >&2; exit 1; }
+  if [ "${1:-}" = gateway ]; then
+    [ -s "$STATE/gateway-route" ] || { echo "the gateway isn't set up yet: run scripts/03-create-gateway.sh first" >&2; exit 1; }
+  fi
+  return 0
+}

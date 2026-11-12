@@ -6,6 +6,7 @@
 # scope=urn:iam:myscopes asks for every intent the agent's policy grants.
 # resource= makes the AgentMinder gateway URL the token's audience.
 . "$(dirname "$0")/lib.sh"
+require_setup
 
 AM_GATEWAY_URL=$(jq -r .gateway_url "$STATE/agentminder.json")
 ID=$(jq -r .client_id "$STATE/agent-client.json")
