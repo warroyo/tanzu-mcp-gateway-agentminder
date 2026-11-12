@@ -2,11 +2,12 @@
 # Changes what the demo agent may do, by editing its AgentMinder policy:
 #
 #   scripts/demo.sh revoke write   # take echo.write away: reset disappears
-#   scripts/demo.sh grant write    # give it back (the agent needs a new token)
+#   scripts/demo.sh grant write    # give it back
 #   scripts/demo.sh show           # what the policy grants now
 #
-# A revoke reaches tokens the agent already holds, in about 30 seconds. A
-# grant only reaches tokens minted after it. The same change can be made in
+# Both reach tokens the agent already holds, in under a minute, as long as
+# the token was minted with the intent. A token minted while it was revoked
+# needs replacing. The same change can be made in
 # the AgentMinder admin console, on the policy's grant rule.
 . "$(dirname "$0")/lib.sh"
 require_setup

@@ -9,7 +9,7 @@
 #      list and is refused, and whoami still works
 #   4. reset straight at AgentMinder is refused with 403
 #   5. a call with no token is refused
-#   6. grant echo.write back: a new token can call reset again
+#   6. grant echo.write back: the same token can call reset again
 #
 # Uses the MCP Inspector CLI when npx is on PATH, else a curl client.
 # MCP_CLIENT=inspector or MCP_CLIENT=curl picks one. Check 4 always uses
@@ -83,16 +83,10 @@ check $r "5. a call with no token is refused"
 
 # 6
 echo "granting echo.write: $("$HERE/demo.sh" grant write)"
-# A grant reaches newly minted tokens after a few seconds.
-for _ in $(seq 1 8); do
-  sleep 10
-  NEW=$("$HERE/agent-token.sh")
-  grep -q 'intent:echo.write' <<<"$(jwt_claims "$NEW" | jq -r .scope)" && break
-done
-TOOLS=$(wait_list "$NEW" '["whoami","reset"]')
-mcp_call "$TANZU_URL" "$NEW" reset
-echo "new token: tools/list $TOOLS, reset rc $CALL_RC"
+TOOLS=$(wait_list "$TOKEN" '["whoami","reset"]')
+mcp_call "$TANZU_URL" "$TOKEN" reset
+echo "same token: tools/list $TOOLS, reset rc $CALL_RC"
 [ "$TOOLS" = '["whoami","reset"]' ] && [ "$CALL_RC" = 0 ] && r=ok || r=no
-check $r "6. after granting echo.write back, a new token can call reset"
+check $r "6. after granting echo.write back, the same token can call reset again"
 
 exit $FAIL

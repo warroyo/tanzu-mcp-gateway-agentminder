@@ -84,7 +84,7 @@ Steps:
    PASS  3. after revoking echo.write, the same token loses reset and keeps whoami
    PASS  4. reset straight at AgentMinder is 403
    PASS  5. a call with no token is refused
-   PASS  6. after granting echo.write back, a new token can call reset
+   PASS  6. after granting echo.write back, the same token can call reset again
    ```
 
    To show it live in the MCP Inspector UI, see [docs/demo.md](docs/demo.md).

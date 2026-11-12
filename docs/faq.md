@@ -35,16 +35,16 @@ A client that calls a tool without `tools/list` first in that session gets `Unkn
 
 ## Do I need a new token after a policy change?
 
-For a grant, yes. For a revoke, no. Tested by changing the policy through the admin API and waiting 45 seconds:
+Only when the token doesn't carry the intent. AgentMinder checks two things on every call: the intent is in the token's scope, which is fixed when the token is minted, and the policy grants it now. Tested by changing the policy through the admin API:
 
-| Change | Token minted before the change | Token minted after |
+| Change | Token that carries the intent | Token minted while the intent was revoked |
 |---|---|---|
-| Grant an intent | Still refused: the token doesn't carry the intent | Allowed |
-| Revoke an intent | Refused, although the token still carries the intent | Refused |
+| Revoke the intent | Refused within about 30 seconds | Refused |
+| Grant it back | Allowed again within about 40 seconds | Still refused: get a new token |
 | Remove a tool's binding | Refused, for every agent | Refused |
-| Add the binding back | Allowed again | Allowed |
+| Add the binding back | Allowed again | Allowed again |
 
-AgentMinder needs both: the intent in the token, and a current grant in the policy. A grant reaches newly minted tokens after about 20 seconds. Short token lifetimes keep the wait for a grant short: an agent that gets a new token every minute picks up a grant within a minute.
+A token minted after a grant carries the intent after about 20 seconds. Short token lifetimes keep that wait short: an agent that gets a new token every minute picks up a new intent within a minute.
 
 Removing a tool's binding on the resource server works as a kill switch: the tool goes away for every agent, and comes back when the binding does, without new tokens. The call is refused with 401.
 

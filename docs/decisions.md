@@ -48,7 +48,7 @@
 
 **Decision.** Two intents shaped like permissions: `echo.read` unlocks `whoami` and `echo.write` unlocks `reset`. The agent starts with both, and the demo revokes `echo.write`.
 
-**Why.** That's how a security admin thinks about it: an agent gets read or write on a server, not a list of tool names. A revoke also reaches tokens the agent already holds, so it makes a live demo. A grant only reaches new tokens.
+**Why.** That's how a security admin thinks about it: an agent gets read or write on a server, not a list of tool names. Both a revoke and a grant back reach the token the agent already holds, so the demo needs no new token.
 
 **Rejected.**
 - *A per-tool deny rule in a policy.* AgentMinder 4.1.1 policy conditions match the caller, not the tool.

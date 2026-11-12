@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Opens the MCP Inspector web UI, connected to the Tanzu MCP Gateway as the
-# demo agent: a fresh agent token in the Authorization header. Rerun it to
-# pick up a grant, which only reaches new tokens. Needs Node.
+# demo agent: a fresh agent token in the Authorization header. Rerun it for
+# a new token: when it expires (15 minutes) or to pick up an intent the old
+# one was minted without. Needs Node.
 #
 # It listens on all interfaces (DEMO_UI_HOST=0.0.0.0), so the UI can run on
 # a remote machine and be opened from your browser. Inspector refuses that

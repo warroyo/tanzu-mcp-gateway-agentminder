@@ -49,7 +49,7 @@ INTENT = "urn:iam:agent:intent:"
 INTENTS = {"echo.read": ["whoami"], "echo.write": ["reset"]}
 GRANTED = ["echo.read", "echo.write"]
 TOOLS = [t for tools in INTENTS.values() for t in tools]
-# Token lifetime. A revoke reaches existing tokens, a grant only new ones.
+# Token lifetime. A token's intents are fixed when it is minted; the policy is checked on every call.
 # Long enough to demo in the Inspector UI without pasting a token often.
 TOKEN_SECONDS = "900"
 

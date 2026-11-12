@@ -70,12 +70,13 @@ Then open the `http://localhost:6274/...` URL Inspector prints.
 
    ```bash
    scripts/demo.sh grant write
-   scripts/demo-ui.sh
    ```
 
-   Stop the old Inspector first (Ctrl+C). With the new token, `reset` is back.
+   Wait about 40 seconds, then list the tools again (reload the page if Inspector shows an error): `reset` is back, on the same token.
 
-   Why: a grant only reaches tokens minted after it. Agents with short-lived tokens pick it up on their next token.
+   Why: the token still carries `echo.write`, and the policy grants it again. A token minted while `echo.write` was revoked wouldn't carry it, and the agent would need a new one.
+
+If Inspector shows `Couldn't load tools: Server returned an error response` after it sits idle for a few minutes, reload the page and connect again. The token lasts 15 minutes from when `scripts/demo-ui.sh` started; after that, rerun the script for a new one.
 
 ## Reset after the demo
 

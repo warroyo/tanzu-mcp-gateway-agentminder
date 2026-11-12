@@ -69,12 +69,12 @@ The token's lifetime comes from the client's `urn:iam:app:oauthAccessTokenExpiry
 - A **tool binding** on the resource server says which intent unlocks a tool. Several tools can share one intent.
 - A **policy** says which agents get which intents.
 
-AgentMinder checks two things on every call: the token carries the intent the tool's binding names, and the policy still grants it. So:
+AgentMinder checks two things on every call: the token carries the intent the tool's binding names, and the policy still grants it. The token's intents are fixed when it is minted; the policy is read on every call. So:
 
 | Change | Tokens the agent already has | New tokens |
 |---|---|---|
 | Revoke an intent in the policy | lose the tools within about 30 seconds | don't carry the intent |
-| Grant an intent | don't gain the tools: the intent isn't in them | carry the intent after a few seconds |
+| Grant it back | regain the tools within about 40 seconds if they carry the intent; tokens minted while it was revoked don't | carry the intent after about 20 seconds |
 | Remove a tool's binding | lose the tool within about 30 seconds, for every agent | same |
 
 Policy conditions match the caller (client, user, group, app), not the tool. Per-tool control goes through intents and bindings.

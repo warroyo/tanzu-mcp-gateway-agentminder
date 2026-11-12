@@ -25,8 +25,8 @@ PASS  4. reset straight at AgentMinder is 403
 no token: rc 1, {"error":{"code":"error","message":"Error POSTing to endpoint: {\"error\":\"AI Gateway: missing MCP-Protocol-Version header\"}...
 PASS  5. a call with no token is refused
 granting echo.write: ["urn:iam:agent:intent:echo.read","urn:iam:agent:intent:echo.write"]
-new token: tools/list ["whoami","reset"], reset rc 0
-PASS  6. after granting echo.write back, a new token can call reset
+same token: tools/list ["whoami","reset"], reset rc 0
+PASS  6. after granting echo.write back, the same token can call reset again
 ```
 
 That was MCP Inspector 2.13.0 on Node 24.19. With `MCP_CLIENT=curl` all six checks pass too; there, the refused `reset` in check 3 shows as `HTTP 200 "Unknown tool: 'reset'"`. A run takes about 90 seconds, most of it waiting for the policy changes.
@@ -38,7 +38,8 @@ An earlier version of the scripts ran `01` to `04` and then `99-cleanup.sh`. The
 Measured by changing the policy or the tool bindings through the admin API:
 
 - A revoked intent stopped working for an existing token within 45 seconds.
-- A granted intent appeared in newly minted tokens after about 20 seconds. Tokens minted before the grant stayed without it.
+- Granting the intent back made it work again within 40 seconds on a token that still carried it (2026-11-12).
+- A granted intent appeared in newly minted tokens after about 20 seconds. Tokens minted while it was revoked stayed without it.
 - Removing a tool's binding stopped the tool for an existing token within 45 seconds (HTTP 401). Adding it back made it work again within 30 seconds, on the same token.
 
 ## Both kinds of host
