@@ -85,6 +85,9 @@ mcp_call() {
   else
     local code body
     curl_init "$url" "$token"
+    # List first, like a real client. The Tanzu gateway refuses a call to
+    # a tool that wasn't listed in the same session.
+    curl_rpc tools/list >/dev/null
     read -r code body < <(curl_rpc tools/call "{\"name\":\"$tool\",\"arguments\":{}}")
     if [ "$code" = 200 ] && jq -e '.result and (.result.isError | not)' <<<"$body" >/dev/null; then CALL_RC=0; else CALL_RC=1; fi
     CALL_OUT="HTTP $code $(jq -c '.result.content[0].text // .error // .' <<<"$body" 2>/dev/null || echo "$body")"

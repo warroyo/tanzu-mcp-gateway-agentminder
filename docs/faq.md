@@ -29,7 +29,20 @@ The Tanzu MCP Gateway answers `initialize` itself, with or without a token. The 
 
 ## Why does a denied tool say "Unknown tool"?
 
-The Tanzu MCP Gateway builds its tool list from what AgentMinder returns, and AgentMinder only returns granted tools. So the Tanzu gateway refuses `denyme` itself as `Unknown tool: 'denyme'`, and the call never reaches AgentMinder. Straight at AgentMinder, the same call gets 403.
+The Tanzu MCP Gateway only passes on calls to tools it listed in the same session, and its list is what AgentMinder returns: the granted tools only. So the Tanzu gateway refuses `denyme` itself as `Unknown tool: 'denyme'`, and the call never reaches AgentMinder. Straight at AgentMinder, the same call gets 403.
+
+A client that calls a tool without `tools/list` first in that session gets `Unknown tool` even for a granted tool. MCP clients normally list first.
+
+## Do I need a new token after a policy change?
+
+For a grant, yes. For a revoke, no. Tested by changing the policy through the admin API and waiting 45 seconds:
+
+| Change | Token minted before the change | Token minted after |
+|---|---|---|
+| Grant `denyme` | Still refused: the token has no `denyme` intent | Allowed |
+| Revoke `denyme` | Refused, although the token still has the intent | Refused |
+
+AgentMinder needs both: the intent in the token, and a current grant in the policy. A grant reaches newly minted tokens after about 20 seconds.
 
 ## Why does the AgentMinder gateway URL return 404 "no matching route"?
 
