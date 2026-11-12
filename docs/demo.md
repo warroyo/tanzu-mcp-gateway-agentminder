@@ -17,7 +17,15 @@ Shows an agent losing a write tool the moment a security admin revokes its write
 DEMO_UI_PUBLIC_HOST=demo-vm.example.com scripts/demo-ui.sh
 ```
 
-Then open `http://<host>:6274/?MCP_INSPECTOR_API_TOKEN=<token>` with the token Inspector prints.
+Then open `https://<host>:6274/?MCP_INSPECTOR_API_TOKEN=<token>` with the token Inspector prints.
+
+It serves HTTPS because browsers only allow the UI's crypto calls on HTTPS or `localhost`. Over plain http from another machine the page loads, but connecting fails with `crypto.randomUUID is not a function`. By default the script makes a self-signed certificate for the names it prints, once, in `.state/inspector-tls/`, so the browser warns on the first visit. To avoid that, pass a certificate the browser trusts, for example one from `tailscale cert` for the machine's tailnet name:
+
+```bash
+DEMO_UI_TLS_CERT=host.crt DEMO_UI_TLS_KEY=host.key DEMO_UI_PUBLIC_HOST=host.tailnet.ts.net scripts/demo-ui.sh
+```
+
+The sandbox on port 6275 stays on http. It's only for MCP Apps, which this demo doesn't use.
 
 **Only on a trusted network.** On a non-loopback address, Inspector warns that its auth token is not access control: the page hands it to anyone who can load it, and they can then act as you. Here that means calling the MCP server as the demo agent. Where the network isn't trusted, keep the UI local and tunnel to it:
 
