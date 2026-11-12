@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Pushes the echo MCP server to CF_ORG/CF_SPACE, at https://<ECHO_APP>.<APPS_DOMAIN>/mcp.
 . "$(dirname "$0")/lib.sh"
+need cf
 
 cf target -o "$CF_ORG" -s "$CF_SPACE" >/dev/null
 cf push "$ECHO_APP" -f "$ROOT/echo-mcp/manifest.yml" -p "$ROOT/echo-mcp" --no-start >/dev/null

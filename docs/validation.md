@@ -27,6 +27,8 @@ no token: init 200, whoami 400 {"error":"AI Gateway: missing MCP-Protocol-Versio
 PASS  6. whoami with no token is refused
 ```
 
+That run used the curl client. A later run of `04-test.sh` against the same kind of setup passed all six checks with both clients, MCP Inspector 2.13.0 (Node 24.19) and curl.
+
 The cleanup removed the gateway, the echo app and all four AgentMinder changes. Reading the objects back afterwards returned 404.
 
 ## Both kinds of host

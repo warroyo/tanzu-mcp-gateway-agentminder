@@ -2,6 +2,8 @@
 # Deletes everything the other scripts made: the gateway, the echo app, and
 # the AgentMinder objects listed in .state/agentminder.json.
 . "$(dirname "$0")/lib.sh"
+need python3
+need cf
 
 cf target -o "$CF_ORG" -s "$CF_SPACE" >/dev/null
 if cf service "$GATEWAY_NAME" >/dev/null 2>&1; then

@@ -5,6 +5,7 @@
 # Every update REPLACES env and mcp-servers, so this always sends the full
 # parameter set. The params are kept in .state/gateway-params.json.
 . "$(dirname "$0")/lib.sh"
+need cf
 
 AM_GATEWAY_URL=$(jq -r '.gateway_url // empty' "$STATE/agentminder.json" 2>/dev/null || true)
 [ -n "$AM_GATEWAY_URL" ] || { echo "run 02-agentminder-setup.py first" >&2; exit 1; }

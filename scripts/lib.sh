@@ -7,9 +7,9 @@ STATE=$ROOT/.state
 set -a; . "$ROOT/config.env"; set +a
 mkdir -p "$STATE"; chmod 700 "$STATE"
 
-for tool in cf curl jq python3; do
-  command -v "$tool" >/dev/null || { echo "needs $tool on PATH" >&2; exit 1; }
-done
+need() { command -v "$1" >/dev/null || { echo "needs $1 on PATH" >&2; exit 1; }; }
+need curl
+need jq
 
 CURL=(curl -sS)
 if [ "${INSECURE:-0}" = 1 ]; then CURL+=(-k); elif [ -n "${CA_FILE:-}" ]; then CURL+=(--cacert "$CA_FILE"); fi
@@ -19,6 +19,7 @@ AM_TOKEN_URL=$AM_TENANT_URL/oauth2/v1/token
 
 # The gateway's public route is the service instance's dashboard URL.
 gateway_route() {
+  need cf
   local guid
   guid=$(cf curl "/v3/service_instances?names=$GATEWAY_NAME" | jq -r '.resources[0].guid // empty')
   [ -n "$guid" ] || { echo "no service instance $GATEWAY_NAME in the targeted space" >&2; return 1; }

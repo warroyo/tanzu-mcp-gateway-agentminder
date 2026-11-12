@@ -41,6 +41,7 @@ Prerequisites:
 - An AgentMinder tenant and a tenant admin client (client ID and secret, `client_credentials` grant). Tested with AgentMinder 4.1.1.
 - The Tanzu MCP Gateway must trust AgentMinder's TLS certificate. If AgentMinder uses a private CA, add the CA to the Ops Manager Director's trusted certificates and Apply Changes. See [docs/faq.md](docs/faq.md#how-does-the-gateway-trust-a-private-ca).
 - `cf` CLI v8 or later, logged in. `curl`, `jq` and `python3` (standard library only).
+- Node 22 or later for the [MCP Inspector](https://github.com/modelcontextprotocol/inspector) CLI, which the tests use. Optional: without Node, the tests fall back to curl. See [docs/testing.md](docs/testing.md).
 
 Steps:
 
@@ -86,6 +87,8 @@ Steps:
    PASS  6. whoami with no token is refused
    ```
 
+   To try the chain by hand with Inspector, see [docs/testing.md](docs/testing.md#try-it-by-hand).
+
 6. Clean up:
 
    ```bash
@@ -102,12 +105,14 @@ echo-mcp/                      test MCP server: answers each call with the heade
 scripts/01-deploy-echo-mcp.sh  pushes echo-mcp
 scripts/02-agentminder-setup.py creates the AgentMinder objects through the admin API
 scripts/03-create-gateway.sh   creates or updates the mcp-gateway service instance
-scripts/04-test.sh             end-to-end checks
+scripts/04-test.sh             end-to-end checks, with MCP Inspector or the curl fallback
+scripts/agent-token.sh         prints a token for the demo agent
 scripts/99-cleanup.sh          deletes everything the scripts made
-scripts/lib.sh, mcp.sh         shared helpers (config, curl, a minimal MCP client)
+scripts/lib.sh, mcp.sh         shared helpers (config, the Inspector wrapper, a minimal curl MCP client)
 docs/architecture.md           components, call sequence, what each layer enforces
 docs/agentminder-api.md        the AgentMinder objects and API calls the setup makes
 docs/decisions.md              why the chain is built this way
 docs/faq.md                    gotchas and how-tos
+docs/testing.md                installing MCP Inspector, using it by hand, the curl fallback
 docs/validation.md             test results from the reference environment
 ```
