@@ -9,6 +9,25 @@ Shows an agent losing a write tool the moment a security admin revokes its write
 - The agent holds both intents: `scripts/demo.sh show` prints `echo.read` and `echo.write`. If not, run `scripts/demo.sh grant write`.
 - Optional: the AgentMinder admin console is open on the policy named `<AM_PREFIX>-agent`, to make the change there instead of with `scripts/demo.sh`.
 
+## Running the UI on a remote machine
+
+`scripts/demo-ui.sh` listens on all interfaces (`0.0.0.0`, ports 6274 for the UI and 6275 for Inspector's sandbox), so it can run on a jump host or lab VM and be opened from your laptop's browser. It prints the addresses it accepts: this machine's hostname and IP addresses. If you reach the machine by another name, set it first:
+
+```bash
+DEMO_UI_PUBLIC_HOST=demo-vm.example.com scripts/demo-ui.sh
+```
+
+Then open `http://<host>:6274/?MCP_INSPECTOR_API_TOKEN=<token>` with the token Inspector prints.
+
+**Only on a trusted network.** On a non-loopback address, Inspector warns that its auth token is not access control: the page hands it to anyone who can load it, and they can then act as you. Here that means calling the MCP server as the demo agent. Where the network isn't trusted, keep the UI local and tunnel to it:
+
+```bash
+DEMO_UI_HOST=127.0.0.1 scripts/demo-ui.sh                  # on the remote machine
+ssh -L 6274:localhost:6274 -L 6275:localhost:6275 <remote>  # on your laptop
+```
+
+Then open the `http://localhost:6274/...` URL Inspector prints.
+
 ## Steps
 
 1. **Connect as the agent.**
