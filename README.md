@@ -40,7 +40,7 @@ Prerequisites:
 - Tanzu Platform for Cloud Foundry 11.0 with the GenAI tile 11.0, which offers the `mcp-gateway` service (plan `gateway`). Tested on TPCF 11.0.1.
 - An AgentMinder tenant and a tenant admin client (client ID and secret, `client_credentials` grant). Tested with AgentMinder 4.1.1.
 - The Tanzu MCP Gateway must trust AgentMinder's TLS certificate. If AgentMinder uses a private CA, add the CA to the Ops Manager Director's trusted certificates and Apply Changes. See [docs/faq.md](docs/faq.md#how-does-the-gateway-trust-a-private-ca).
-- `cf` CLI v8 or later, logged in. `curl`, `jq` and `python3` (standard library only).
+- `cf` CLI v8 or later, logged in, with an org where you can create a space (or an existing space where you can push apps and create services). `curl`, `jq` and `python3` (standard library only).
 - Node 22 or later for the [MCP Inspector](https://github.com/modelcontextprotocol/inspector) CLI, which the tests use. Optional: without Node, the tests fall back to curl. See [docs/testing.md](docs/testing.md).
 
 Steps:
@@ -52,7 +52,7 @@ Steps:
    $EDITOR config.env
    ```
 
-2. Push the echo MCP server:
+2. Push the echo MCP server. This creates `CF_SPACE` in `CF_ORG` if it doesn't exist:
 
    ```bash
    scripts/01-deploy-echo-mcp.sh
