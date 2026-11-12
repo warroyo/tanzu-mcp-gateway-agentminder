@@ -18,8 +18,9 @@ curl -s "$AM_TENANT_URL/oauth2/v1/token" -u "$ADMIN_ID:$ADMIN_SECRET" \
 | `mcpServerEndpoint` | `https://echo-mcp.apps.example.com/mcp` | Where AgentMinder forwards allowed calls |
 | `secondaryAudiences` | the same URL | |
 | `primaryAudience` | the AgentMinder gateway URL (see below) | Agents ask for tokens with `resource=` this URL |
-| `resourceServerScopes` | per tool: `<tool>` and `urn:iam:agent:intent:<tool>` | The intent scope is what a policy grants |
-| `agentToolBindings` | per tool: `{toolName, intentScope}` | Maps MCP tool names to intent scopes |
+| `resourceServerScopes` | each tool name, and each intent as `urn:iam:agent:intent:<intent>` | The intents this server knows |
+| `agentToolBindings` | per tool: `{toolName, intentScope}` | Which intent unlocks each tool; tools can share one |
+| `protectedByDefault` | `true` | A tool with no binding can't be called |
 | `enforcePolicies` | `true` | Turns per-tool authorization on |
 | `mcpRequireAccessToken`, `mcpDiscoverRequireAccessToken` | `true` | No anonymous calls or tool lists |
 | `mcpIgnoreSslValidation` | `true` only for a self-signed MCP server | AgentMinder's own check of the server's certificate |
@@ -42,7 +43,7 @@ The gateway route takes 30 to 60 seconds to start answering after the create. Be
 
 `POST /admin/v1/Apps` with `clientType: CONFIDENTIAL` and `allowedGrantTypes` including `client_credentials`. The response holds `clientId` and `secret`. The secret is shown only once.
 
-`metadata: [{name: urn:iam:app:oauthAccessTokenExpirySecs, value: "300"}]` sets the token lifetime.
+`metadata: [{name: urn:iam:app:oauthAccessTokenExpirySecs, value: "900"}]` sets the token lifetime in seconds.
 
 ## 3. The policy
 
@@ -57,12 +58,14 @@ The gateway route takes 30 to 60 seconds to start answering after the create. Be
   "apps": [{"id": "<resource server appId>", "name": "demo-echo-mcp"}],
   "rules": [{
     "conditions": {"principal": {"clientApp": {"operator": "in", "value": ["<agent client appId>"]}}},
-    "result": {"effect": "grant", "msg": "demo-agent", "privileges": ["urn:iam:agent:intent:whoami"]}
+    "result": {"effect": "grant", "msg": "demo-agent", "privileges": ["urn:iam:agent:intent:echo.read", "urn:iam:agent:intent:echo.write"]}
   }]
 }
 ```
 
-`privileges` lists the intent scopes granted. A tool whose intent isn't listed is hidden from `tools/list` and refused on call.
+`privileges` lists the intents granted. A tool whose intent isn't listed is hidden from `tools/list` and refused on call.
+
+To change a grant, send the policy back with `PUT /admin/v1/AuthZPolicies/<policyId>`. Send only the fields above: the server refuses its own fields, such as `policyId` and `createdDate`, with `Unknown property`. `scripts/demo.sh` does this.
 
 ## 4. AuthClientPolicy
 

@@ -4,7 +4,10 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 STATE=$ROOT/.state
 [ -f "$ROOT/config.env" ] || { echo "missing config.env: copy config.env.example and fill it in" >&2; exit 1; }
+# A variable already set in the environment wins over config.env.
+_env=$(export -p)
 set -a; . "$ROOT/config.env"; set +a
+eval "$_env"
 mkdir -p "$STATE"; chmod 700 "$STATE"
 
 need() { command -v "$1" >/dev/null || { echo "needs $1 on PATH" >&2; exit 1; }; }

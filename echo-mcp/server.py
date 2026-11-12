@@ -17,7 +17,11 @@ import json
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-TOOLS = ("whoami", "denyme")
+# whoami stands for a read tool and reset for a write tool. Both only echo.
+TOOLS = {
+    "whoami": "Read: show what the server received",
+    "reset": "Write: pretend to reset something, and show what the server received",
+}
 AM_ISSUER = os.environ.get("AM_ISSUER", "")
 
 
@@ -94,9 +98,8 @@ class Handler(BaseHTTPRequestHandler):
             }
         elif method == "tools/list":
             result = {"tools": [
-                {"name": t, "description": f"{t}: echo what the server received",
-                 "inputSchema": {"type": "object", "properties": {}}}
-                for t in TOOLS
+                {"name": t, "description": d, "inputSchema": {"type": "object", "properties": {}}}
+                for t, d in TOOLS.items()
             ]}
         elif method == "tools/call":
             text = json.dumps({"tool": msg.get("params", {}).get("name"),

@@ -7,7 +7,7 @@ This repo shows how to put two gateways in front of an MCP server, so each one d
 - The **Tanzu MCP Gateway** (the `mcp-gateway` service of Tanzu Platform's GenAI tile) is the platform's single front door for MCP servers. It's a marketplace service, and it gives one route for every registered server plus gateway metrics. With the Service Publisher tile it also makes MCP servers discoverable in the marketplace.
 - **AgentMinder** knows who the agent is and decides which tools that agent may use. Its AI Gateway checks each MCP call against policy, and it hides the tools the agent isn't granted.
 
-Here the Tanzu MCP Gateway forwards the agent's AgentMinder token to the AgentMinder AI Gateway, unchanged. AgentMinder enforces per-tool access and passes the call to the MCP server. The scripts build the whole chain with a small echo MCP server, then test that each layer does its job.
+Here the Tanzu MCP Gateway forwards the agent's AgentMinder token to the AgentMinder AI Gateway, unchanged. AgentMinder enforces per-tool access and passes the call to the MCP server. The scripts build the whole chain with a small echo MCP server that has a read tool and a write tool. The agent starts with both. Revoking its write permission in AgentMinder takes the write tool away within seconds, with no change to the agent or the Tanzu gateway.
 
 ## How it works
 
@@ -26,10 +26,10 @@ flowchart LR
   am -- "4. tool allowed by policy?<br/>adds identity headers" --> mcp
 ```
 
-1. The agent gets a token from AgentMinder for the AgentMinder gateway URL. The token carries one intent scope per tool the agent's policy grants, for example `urn:iam:agent:intent:whoami`.
+1. The agent gets a token from AgentMinder for the AgentMinder gateway URL. The token carries the intents, or permissions, the agent's policy grants, for example `urn:iam:agent:intent:echo.read`. Each intent unlocks one or more tools.
 2. The agent calls the Tanzu MCP Gateway at `https://<gateway route>/<server name>/mcp`.
 3. The Tanzu MCP Gateway has the AgentMinder gateway URL registered as an off-platform server, with `auth.mode: forward_token`. It passes the bearer token on as it is.
-4. AgentMinder validates the token, filters `tools/list` to the granted tools, refuses other tool calls, and forwards allowed calls to the MCP server with the same token and extra identity headers.
+4. AgentMinder validates the token, checks the policy, filters `tools/list` to the tools the agent's intents unlock, refuses other tool calls, and forwards allowed calls to the MCP server with the same token and extra identity headers.
 
 Details, the sequence diagram and what each layer enforces are in [docs/architecture.md](docs/architecture.md).
 
@@ -58,7 +58,7 @@ Steps:
    scripts/01-deploy-echo-mcp.sh
    ```
 
-3. Create the AgentMinder resource server, agent client and policy. The policy grants `whoami` and leaves `denyme` ungranted:
+3. Create the AgentMinder resource server, agent client and policy. Intent `echo.read` unlocks the `whoami` tool and `echo.write` unlocks `reset`. The policy grants the agent both:
 
    ```bash
    scripts/02-agentminder-setup.py
@@ -79,15 +79,15 @@ Steps:
    Expected result:
 
    ```
-   PASS  1. token carries the whoami intent
-   PASS  2. tools/list shows only the granted tool
-   PASS  3. whoami works and the server got the agent's token unchanged
-   PASS  4. denyme through the Tanzu gateway is refused
-   PASS  5. denyme straight at AgentMinder is 403
-   PASS  6. whoami with no token is refused
+   PASS  1. token carries echo.read and echo.write
+   PASS  2. both tools listed; whoami works and the server got the agent's token unchanged
+   PASS  3. after revoking echo.write, the same token loses reset and keeps whoami
+   PASS  4. reset straight at AgentMinder is 403
+   PASS  5. a call with no token is refused
+   PASS  6. after granting echo.write back, a new token can call reset
    ```
 
-   To try the chain by hand with Inspector, see [docs/testing.md](docs/testing.md#try-it-by-hand).
+   To show it live in the MCP Inspector UI, see [docs/demo.md](docs/demo.md).
 
 6. Clean up:
 
@@ -107,11 +107,14 @@ scripts/02-agentminder-setup.py creates the AgentMinder objects through the admi
 scripts/03-create-gateway.sh   creates or updates the mcp-gateway service instance
 scripts/04-test.sh             end-to-end checks, with MCP Inspector or the curl fallback
 scripts/agent-token.sh         prints a token for the demo agent
+scripts/demo.sh                grants or revokes the agent's echo.read and echo.write intents
+scripts/demo-ui.sh             opens the MCP Inspector web UI as the demo agent
 scripts/99-cleanup.sh          deletes everything the scripts made
 scripts/lib.sh, mcp.sh         shared helpers (config, the Inspector wrapper, a minimal curl MCP client)
 docs/architecture.md           components, call sequence, what each layer enforces
 docs/agentminder-api.md        the AgentMinder objects and API calls the setup makes
 docs/decisions.md              why the chain is built this way
+docs/demo.md                   presenter steps for a live grant and revoke in the Inspector UI
 docs/faq.md                    gotchas and how-tos
 docs/testing.md                installing MCP Inspector, using it by hand, the curl fallback
 docs/validation.md             test results from the reference environment

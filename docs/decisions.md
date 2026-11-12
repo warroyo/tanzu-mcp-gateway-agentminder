@@ -39,3 +39,17 @@
 **Decision.** Test with `echo-mcp`, which returns the header names and token claims it gets, instead of a real MCP server.
 
 **Why.** It proves the token reaches the server unchanged (same SHA-256), shows which headers AgentMinder adds, and has a tool to grant and a tool to deny, with no side effects.
+
+## Intents are permissions, granted per agent
+
+2026-11-12.
+
+**Context.** AgentMinder controls tools through intents: a tool binding names the intent that unlocks a tool, and a policy grants intents to agents. The first version had one intent per tool and granted only one of them.
+
+**Decision.** Two intents shaped like permissions: `echo.read` unlocks `whoami` and `echo.write` unlocks `reset`. The agent starts with both, and the demo revokes `echo.write`.
+
+**Why.** That's how a security admin thinks about it: an agent gets read or write on a server, not a list of tool names. A revoke also reaches tokens the agent already holds, so it makes a live demo. A grant only reaches new tokens.
+
+**Rejected.**
+- *A per-tool deny rule in a policy.* AgentMinder 4.1.1 policy conditions match the caller, not the tool.
+- *Removing a tool's binding.* It works live in both directions, but it changes the server for every agent. The FAQ covers it as a kill switch.

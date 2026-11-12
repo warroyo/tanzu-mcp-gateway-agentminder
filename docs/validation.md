@@ -10,26 +10,36 @@ Results from the reference environment, November 2026.
 
 ## Clean run of the scripts
 
-`01` to `04` on fresh names, then `99-cleanup.sh`:
+`01` to `04` on fresh names, with both test clients:
 
 ```
-token sha256 dd903b296f0a: {"aud":["https://agentminder.example.com/default/aigateway/v1/mcp/ZTkw...","https://agentminder.example.com/default/"],"scope":"urn:iam:t.authenticate urn:iam:agent:intent:whoami urn:iam:m.meclient"}
-PASS  1. token carries the whoami intent
-tools/list: 200 ["whoami"]
-PASS  2. tools/list shows only the granted tool
-whoami: 200, echo saw token sha256 dd903b296f0a
-PASS  3. whoami works and the server got the agent's token unchanged
-denyme: 200 {"isError":true,"text":"Unknown tool: 'denyme'"}
-PASS  4. denyme through the Tanzu gateway is refused
-denyme at AgentMinder: 403
-PASS  5. denyme straight at AgentMinder is 403
-no token: init 200, whoami 400 {"error":"AI Gateway: missing MCP-Protocol-Version header"}
-PASS  6. whoami with no token is refused
+token sha256 3691238de55e, scope: urn:iam:t.authenticate urn:iam:agent:intent:echo.write urn:iam:m.meclient urn:iam:agent:intent:echo.read
+PASS  1. token carries echo.read and echo.write
+tools/list: ["whoami","reset"], whoami rc 0, echo saw token sha256 3691238de55e
+PASS  2. both tools listed; whoami works and the server got the agent's token unchanged
+revoking echo.write: ["urn:iam:agent:intent:echo.read"]
+same token: tools/list ["whoami"], reset rc 5 {"error":{"code":"tool_not_found","message":"Tool 'reset' not found on server."}}, whoami rc 0
+PASS  3. after revoking echo.write, the same token loses reset and keeps whoami
+reset at AgentMinder: HTTP 403
+PASS  4. reset straight at AgentMinder is 403
+no token: rc 1, {"error":{"code":"error","message":"Error POSTing to endpoint: {\"error\":\"AI Gateway: missing MCP-Protocol-Version header\"}...
+PASS  5. a call with no token is refused
+granting echo.write: ["urn:iam:agent:intent:echo.read","urn:iam:agent:intent:echo.write"]
+new token: tools/list ["whoami","reset"], reset rc 0
+PASS  6. after granting echo.write back, a new token can call reset
 ```
 
-That run used the curl client. A later run of `04-test.sh` against the same kind of setup passed all six checks with both clients, MCP Inspector 2.13.0 (Node 24.19) and curl.
+That was MCP Inspector 2.13.0 on Node 24.19. With `MCP_CLIENT=curl` all six checks pass too; there, the refused `reset` in check 3 shows as `HTTP 200 "Unknown tool: 'reset'"`. A run takes about 90 seconds, most of it waiting for the policy changes.
 
-The cleanup removed the gateway, the echo app and all four AgentMinder changes. Reading the objects back afterwards returned 404.
+An earlier version of the scripts ran `01` to `04` and then `99-cleanup.sh`. The cleanup removed the gateway, the echo app and all four AgentMinder changes, and reading the objects back afterwards returned 404.
+
+## Policy and binding changes
+
+Measured by changing the policy or the tool bindings through the admin API:
+
+- A revoked intent stopped working for an existing token within 45 seconds.
+- A granted intent appeared in newly minted tokens after about 20 seconds. Tokens minted before the grant stayed without it.
+- Removing a tool's binding stopped the tool for an existing token within 45 seconds (HTTP 401). Adding it back made it work again within 30 seconds, on the same token.
 
 ## Both kinds of host
 

@@ -22,21 +22,26 @@ sequenceDiagram
   participant S as MCP server
 
   A->>IdP: client_credentials, scope=urn:iam:myscopes, resource=AM gateway URL
-  IdP-->>A: JWT, aud = AM gateway URL, scope includes urn:iam:agent:intent:whoami
+  IdP-->>A: JWT, aud = AM gateway URL, scope includes intent:echo.read, intent:echo.write
   A->>T: POST /echo/mcp initialize (Bearer JWT)
   T-->>A: 200, Mcp-Session-Id
   A->>T: tools/list
   T->>AM: tools/list (same Bearer JWT)
   AM->>S: tools/list
-  S-->>AM: whoami, denyme
-  AM-->>T: whoami only (filtered by policy)
-  T-->>A: whoami only
+  S-->>AM: whoami, reset
+  AM-->>T: tools the agent's intents unlock
+  T-->>A: whoami, reset
   A->>T: tools/call whoami
   T->>AM: tools/call whoami (same Bearer JWT)
   AM->>S: tools/call whoami (same JWT + identity headers)
   S-->>A: result
-  A->>T: tools/call denyme
-  T-->>A: error "Unknown tool: 'denyme'" (never reaches AgentMinder)
+  Note over IdP,AM: admin revokes echo.write in the policy
+  A->>T: tools/list (same token)
+  T->>AM: tools/list
+  AM-->>T: whoami only
+  T-->>A: whoami only
+  A->>T: tools/call reset
+  T-->>A: error "Unknown tool: 'reset'" (never reaches AgentMinder)
 ```
 
 ## The token
@@ -52,11 +57,27 @@ Example claims from the test run:
 ```json
 {
   "aud": ["https://agentminder.example.com/default/aigateway/v1/mcp/ZTkw...", "https://agentminder.example.com/default/"],
-  "scope": "urn:iam:t.authenticate urn:iam:agent:intent:whoami urn:iam:m.meclient"
+  "scope": "urn:iam:t.authenticate urn:iam:agent:intent:echo.write urn:iam:m.meclient urn:iam:agent:intent:echo.read"
 }
 ```
 
-The token's lifetime comes from the client's `urn:iam:app:oauthAccessTokenExpirySecs` metadata (300 seconds in the setup script).
+The token's lifetime comes from the client's `urn:iam:app:oauthAccessTokenExpirySecs` metadata. The setup script uses 900 seconds, so a token lasts through a demo.
+
+## Intents, bindings and policy
+
+- An **intent** is a permission name, such as `echo.read`. Its scope form is `urn:iam:agent:intent:echo.read`.
+- A **tool binding** on the resource server says which intent unlocks a tool. Several tools can share one intent.
+- A **policy** says which agents get which intents.
+
+AgentMinder checks two things on every call: the token carries the intent the tool's binding names, and the policy still grants it. So:
+
+| Change | Tokens the agent already has | New tokens |
+|---|---|---|
+| Revoke an intent in the policy | lose the tools within about 30 seconds | don't carry the intent |
+| Grant an intent | don't gain the tools: the intent isn't in them | carry the intent after a few seconds |
+| Remove a tool's binding | lose the tool within about 30 seconds, for every agent | same |
+
+Policy conditions match the caller (client, user, group, app), not the tool. Per-tool control goes through intents and bindings.
 
 ## What each layer enforces
 

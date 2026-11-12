@@ -2,11 +2,12 @@
 """Creates the AgentMinder side, through the tenant admin API:
 
   resource server  <prefix>-echo-mcp: an AI resource server in front of the
-                   echo server, with one intent scope per tool. Its
-                   AgentMinder gateway URL becomes its primary audience.
+                   echo server. Two intents: echo.read unlocks whoami and
+                   echo.write unlocks reset. Its AgentMinder gateway URL
+                   becomes its primary audience.
   agent client     <prefix>-agent: a confidential client for the agent.
-  policy           <prefix>-agent: grants the client the whoami intent only.
-                   denyme stays ungranted, to show the deny.
+  policy           <prefix>-agent: grants the client both intents. The demo
+                   revokes echo.write (scripts/demo.sh).
   AuthClientPolicy the client is added as a principal, which AgentMinder
                    needs before it issues the client tokens with intents.
 
@@ -44,8 +45,13 @@ PREFIX = CFG.get("AM_PREFIX") or "demo"
 INSECURE = CFG.get("INSECURE") == "1"
 ECHO_URL = f"https://{CFG['ECHO_APP']}.{CFG['APPS_DOMAIN']}/mcp"
 INTENT = "urn:iam:agent:intent:"
-TOOLS = ["whoami", "denyme"]
-GRANTED = ["whoami"]
+# Intents are permissions; each unlocks one or more tools.
+INTENTS = {"echo.read": ["whoami"], "echo.write": ["reset"]}
+GRANTED = ["echo.read", "echo.write"]
+TOOLS = [t for tools in INTENTS.values() for t in tools]
+# Token lifetime. A revoke reaches existing tokens, a grant only new ones.
+# Long enough to demo in the Inspector UI without pasting a token often.
+TOKEN_SECONDS = "900"
 
 if INSECURE:
     CTX = ssl._create_unverified_context()
@@ -121,13 +127,17 @@ server = {
     "mcpRequireAccessToken": True,
     "mcpDiscoverRequireAccessToken": True,
     "enforcePolicies": True,
+    # A tool with no binding can't be called.
+    "protectedByDefault": True,
     "resScope": f"urn:rs:{server_name}",
-    # Each tool is a scope and an intent scope of the same name.
-    "resourceServerScopes": [s for t in TOOLS for s in (
-        {"scope": t, "description": t, "label": t, "consentRequired": False, "isDefaultScope": True, "risk": "normal"},
-        {"scope": INTENT + t, "description": f"intent {t}", "label": t, "consentRequired": False, "isDefaultScope": False, "risk": "normal"},
-    )],
-    "agentToolBindings": [{"toolName": t, "intentScope": INTENT + t, "skill": "", "description": t} for t in TOOLS],
+    "resourceServerScopes":
+        [{"scope": t, "description": t, "label": t, "consentRequired": False, "isDefaultScope": True, "risk": "normal"}
+         for t in TOOLS] +
+        [{"scope": INTENT + i, "description": f"intent {i}", "label": i, "consentRequired": False, "isDefaultScope": False,
+          "risk": "elevated" if i.endswith("write") else "normal"} for i in INTENTS],
+    # Which intent unlocks each tool.
+    "agentToolBindings": [{"toolName": t, "intentScope": INTENT + i, "skill": "", "description": t}
+                          for i, tools in INTENTS.items() for t in tools],
 }
 
 # The gateway URL comes from the app ID, which exists only after the create.
@@ -156,7 +166,7 @@ if "client" not in ids:
         "skewTimeSecs": 0,
         "userInfoEndpointResponseFormat": "PLAIN_JSON",
         "itEncryptionTarget": "NONE",
-        "metadata": [{"name": "urn:iam:app:oauthAccessTokenExpirySecs", "value": "300"}],
+        "metadata": [{"name": "urn:iam:app:oauthAccessTokenExpirySecs", "value": TOKEN_SECONDS}],
     })
     ids["client"] = r["appId"]
     save()
@@ -166,14 +176,14 @@ if "policy" not in ids:
     r = call("POST", "/admin/v1/AuthZPolicies", {
         "policyName": client_name,
         "displayName": client_name,
-        "description": "Grants the demo agent the whoami tool only",
+        "description": "Grants the demo agent read and write",
         "policySubType": "role",
         "status": "active",
         "matchAnyApp": False,
         "apps": [{"id": ids["server"], "name": server_name}],
         "rules": [{
             "conditions": {"principal": {"clientApp": {"operator": "in", "value": [ids["client"]]}}},
-            "result": {"effect": "grant", "msg": client_name, "privileges": [INTENT + t for t in GRANTED]},
+            "result": {"effect": "grant", "msg": client_name, "privileges": [INTENT + i for i in GRANTED]},
         }],
     })
     ids["policy"] = r["policyId"]

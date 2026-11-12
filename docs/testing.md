@@ -41,20 +41,20 @@ TOKEN=$(scripts/agent-token.sh)
 URL=$(cat .state/gateway-route)/echo/mcp
 I() { npx -y @modelcontextprotocol/inspector@2.13.0 --cli "$URL" --transport http --header "Authorization: Bearer $TOKEN" "$@"; }
 
-I --method tools/list                          # only whoami
+I --method tools/list                          # whoami and reset
 I --method tools/call --tool-name whoami       # the headers and token claims echo-mcp got
-I --method tools/call --tool-name denyme       # exit 5, tool_not_found
+I --method tools/call --tool-name reset        # works until echo.write is revoked
 ```
 
-`scripts/agent-token.sh` prints a fresh token. Tokens last 5 minutes.
+`scripts/agent-token.sh` prints a fresh token. Tokens last 15 minutes. After `scripts/demo.sh revoke write`, `reset` disappears from the list and refuses calls (exit 5, `tool_not_found`).
 
-For the web UI, run `npx @modelcontextprotocol/inspector@2.13.0` and connect with transport Streamable HTTP, the gateway URL, and an `Authorization: Bearer <token>` header.
+For the web UI, see [demo.md](demo.md).
 
 ## What Inspector shows and doesn't
 
-- **Denied tools.** Inspector lists the tools before it calls one, so it refuses `denyme` itself with `tool_not_found` (exit 5). That's still AgentMinder's decision: AgentMinder left the tool out of the list.
+- **Denied tools.** Inspector lists the tools before it calls one, so after a revoke it refuses `reset` itself with `tool_not_found` (exit 5). That's still AgentMinder's decision: AgentMinder left the tool out of the list.
 - **No token.** Inspector reports the error and its HTTP status, for example `"status":400` with `AI Gateway: missing MCP-Protocol-Version header` (exit 1).
-- **The 403 from AgentMinder.** Inspector never sends the call, so it never sees the 403. Check 5 in `04-test.sh` always uses curl for that reason.
+- **The 403 from AgentMinder.** Inspector never sends the call, so it never sees the 403. Check 4 in `04-test.sh` always uses curl for that reason.
 
 ## The curl fallback
 
