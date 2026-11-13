@@ -62,7 +62,16 @@ From `<gateway route>/registry.json`, which lists each server and its endpoint U
 
 ## The gateway route returns 404
 
-The route's root serves nothing on the build tested here, although the AI Services docs show a dashboard there. The MCP endpoints are at `<route>/<server name>/mcp`, the server list at `<route>/registry.json`, and a health check at `<route>/health`. Usage metrics are in Tanzu Hub: Marketplace, Service Offerings, MCP Gateway, Usage.
+The gateway's dashboard is turned off by default, on purpose, to send users to Tanzu Hub, although the AI Services docs still show it at the route's root. To turn it back on, set a hidden environment variable on the gateway app. The app lives in the `system` org, in a space named `mcp-gateway-<service instance GUID>`, so it needs an admin:
+
+```bash
+GUID=$(cf service mcp-gw --guid)
+cf target -o system -s mcp-gateway-$GUID
+cf set-env mcp-gateway-$GUID ENABLE_DASHBOARD true
+cf restart mcp-gateway-$GUID
+```
+
+The MCP endpoints are at `<route>/<server name>/mcp`, the server list at `<route>/registry.json`, and a health check at `<route>/health`. Usage metrics are in Tanzu Hub: Marketplace, Service Offerings, MCP Gateway, Usage.
 
 ## The gateway service won't delete
 

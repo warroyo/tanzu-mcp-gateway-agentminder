@@ -109,7 +109,7 @@ The gateway app is a normal CF app, so its instances can land on BOSH Diego cell
 
 ## Discovery
 
-The gateway lists its servers, with their endpoint URLs, at `<gateway route>/registry.json`, without auth. The AI Services docs also describe an HTML dashboard at the gateway route. On the build tested here the route's root returns 404, with or without a bound app; only `registry.json` is served.
+The gateway lists its servers, with their endpoint URLs, at `<gateway route>/registry.json`, without auth. Its HTML dashboard at the route's root is turned off by default, to send users to Tanzu Hub instead, so the root returns 404. The FAQ says how to turn it back on.
 
 A bind of an app to the gateway registers the app as a server, and its binding credentials are empty. The gateway refuses service keys. So binding gives an agent nothing to connect with.
 
