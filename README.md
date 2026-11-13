@@ -118,4 +118,5 @@ docs/demo.md                   presenter steps for a live grant and revoke in th
 docs/faq.md                    gotchas and how-tos
 docs/testing.md                installing MCP Inspector, using it by hand, the curl fallback
 docs/validation.md             test results from the reference environment
+LICENSE                        MIT
 ```
