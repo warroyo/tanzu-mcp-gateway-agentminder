@@ -109,6 +109,8 @@ The gateway app is a normal CF app, so its instances can land on BOSH Diego cell
 
 ## Discovery
 
-The Tanzu MCP Gateway on its own registers servers but doesn't publish them. A bind of an app to the gateway registers the app as a server, and its binding credentials are empty. The gateway refuses service keys. It has no catalog endpoint and no UI.
+The gateway lists its servers, with their endpoint URLs, at `<gateway route>/registry.json`, without auth. The AI Services docs also describe an HTML dashboard at the gateway route. On the build tested here the route's root returns 404, with or without a bound app; only `registry.json` is served.
 
-Discovery comes from the **Service Publisher** tile. It publishes an MCP server running as a CF app as its own marketplace offering, and registers it in the gateway. Agents then find it in the marketplace and bind to it, and the binding credentials hold the server's URL. Service Publisher publishes CF apps only, so the off-platform AgentMinder URL used here can't be published that way. This repo doesn't cover Service Publisher.
+A bind of an app to the gateway registers the app as a server, and its binding credentials are empty. The gateway refuses service keys. So binding gives an agent nothing to connect with.
+
+Marketplace discovery comes from the **Service Publisher** tile. It publishes an MCP server running as a CF app as its own marketplace offering, and registers it in the gateway; agents bind to the offering. It publishes CF apps, called on their internal route, so it would put the app, not the AgentMinder gateway URL, behind the Tanzu gateway. This repo doesn't cover Service Publisher, and it wasn't tested.

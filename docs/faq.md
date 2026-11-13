@@ -58,7 +58,11 @@ The route takes 30 to 60 seconds to register after the resource server is create
 
 ## How do agents discover the gateway's servers?
 
-Not through the gateway on its own: it has no catalog and the bind credentials are empty. Use the Service Publisher tile. See [architecture.md](architecture.md#discovery).
+From `<gateway route>/registry.json`, which lists each server and its endpoint URL. Bind credentials are empty, so binding doesn't help. For marketplace discovery, the Service Publisher tile publishes a CF app as its own offering. See [architecture.md](architecture.md#discovery).
+
+## The gateway route returns 404
+
+The route's root serves nothing on the build tested here, although the AI Services docs show a dashboard there. The MCP endpoints are at `<route>/<server name>/mcp`, the server list at `<route>/registry.json`, and a health check at `<route>/health`. Usage metrics are in Tanzu Hub: Marketplace, Service Offerings, MCP Gateway, Usage.
 
 ## The gateway service won't delete
 

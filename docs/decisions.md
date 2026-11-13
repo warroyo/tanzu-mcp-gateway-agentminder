@@ -28,7 +28,7 @@
 
 **Context.** A server can be registered by binding a CF app to the gateway, or by listing a URL in the `mcp-servers` create parameter.
 
-**Decision.** The `mcp-servers` parameter. The registered target is the AgentMinder gateway URL, which isn't a CF app, so it can't be bound.
+**Decision.** The `mcp-servers` parameter. It is the only way to give the gateway a URL as the upstream. Bind parameters have no URL field: a bound app needs an `apps.internal` route, and the gateway calls the app on that route directly. Binding `echo-mcp` would skip AgentMinder.
 
 **Consequence.** Every `cf update-service` replaces the whole `mcp-servers` list and `env`. The script keeps the full parameter set in one file and always sends all of it.
 
